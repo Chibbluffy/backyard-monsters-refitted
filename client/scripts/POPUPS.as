@@ -16,6 +16,13 @@ package
    import flash.text.TextFieldAutoSize;
    import flash.utils.Timer;
    import gs.TweenLite;
+   import flash.net.navigateToURL;
+   import flash.net.URLRequest;
+   import flash.net.URLVariables;
+   import flash.desktop.NativeProcess;
+   import flash.desktop.NativeProcessStartupInfo;
+   import flash.desktop.NativeApplication;
+   import flash.filesystem.File;
    
    public class POPUPS
    {
@@ -83,7 +90,23 @@ package
       {
          if(GLOBAL._halt)
          {
-            GLOBAL.CallJS("reloadPage");
+            GLOBAL.Message("Clicked");
+            var appURL:String = stage.loaderInfo.parameters.appURL as String; 
+
+            if (appURL != null) {
+               var playerPath:File = File.applicationDirectory.resolve(NativeApplication.nativeApplication.executableName);
+               var startupInfo:NativeProcessStartupInfo = new NativeProcessStartupInfo();
+               startupInfo.executable = playerPath;
+
+               var arguments:Vector.<String> = new Vector.<String>();
+               arguments.push(appURL); 
+               startupInfo.arguments = arguments;
+
+               var process:NativeProcess = new NativeProcess();
+               process.start(startupInfo);
+
+               NativeApplication.nativeApplication.exit();
+            }
          }
          if(!GLOBAL._catchup || _lastGroup == "tip")
          {
