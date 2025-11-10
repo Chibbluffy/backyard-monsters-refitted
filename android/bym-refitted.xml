@@ -12,8 +12,11 @@
         <content>android/apk/bymr-android.swf</content>
         <systemChrome>standard</systemChrome>
         <fullScreen>true</fullScreen>
-        <aspectRatio>landscape</aspectRatio>
-        <autoOrients>false</autoOrients>
+        <autoOrients>true</autoOrients> 
+        <supportedOrientations>
+            <aspectRatio>landscape</aspectRatio>
+            <aspectRatio>reverseLandscape</aspectRatio>
+        </supportedOrientations>
         <visible>true</visible>
         <width>720</width>
         <height>1280</height>
@@ -42,7 +45,7 @@
            <supports-screens android:normalScreens="true"/>
            <uses-feature android:required="true" android:name="android.hardware.touchscreen.multitouch"/>
            <application android:enabled="true" android:hardwareAccelerated="true" android:targetSdkVersion="35">
-               <activity android:excludeFromRecents="false" android:screenOrientation="landscape">
+               <activity android:excludeFromRecents="false">
                    <intent-filter>
                        <action android:name="android.intent.action.MAIN"/>
                        <category android:name= "android.intent.category.LAUNCHER"/>
