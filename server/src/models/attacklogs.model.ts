@@ -35,6 +35,9 @@ export class AttackLogs {
   @Property({ type: 'number', nullable: true })
   y?: number;
 
+  @Property({ type: 'number', nullable: true })
+  attackid?: number;
+
   @Property({ columnType: "jsonb", nullable: true })
   loot?: JsonObject = {};
 

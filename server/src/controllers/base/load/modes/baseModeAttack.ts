@@ -11,6 +11,7 @@ import { getCurrentDateTime } from "../../../../utils/getCurrentDateTime.js";
 import { validateRange } from "../../../../services/maproom/v2/validateRange.js";
 import { getGeneratedCells, cellKey } from "../../../../services/maproom/v3/generateCells.js";
 import { createAttackLog } from "../../../../services/base/createAttackLog.js";
+import { AttackLogs } from "../../../../models/attacklogs.model.js";
 import { updateResources, Operation } from "../../../../services/base/updateResources.js";
 import { isAttackActive } from "../../../../services/base/isAttackActive.js";
 import { baseUnderAttackErr, baseProtectedErr, userOnlineErr, truceActiveErr } from "../../../../errors/errors.js";
@@ -60,8 +61,12 @@ export const baseModeAttack = async ({ user, baseid, mapversion, attackCost }: B
 
   if (!save) throw new Error(`Save not found for baseid: ${baseid}`);
 
+  let staleAttackId: number | null = null;
+
   if (save.type !== BaseType.TRIBE) {
     if (save.protected > getCurrentDateTime()) throw baseProtectedErr();
+
+    if (save.attackid !== 0 && !isAttackActive(save)) staleAttackId = save.attackid;
 
     if (isAttackActive(save)) throw baseUnderAttackErr();
 
@@ -171,6 +176,19 @@ export const baseModeAttack = async ({ user, baseid, mapversion, attackCost }: B
 
   postgres.em.persist(userSave);
   await postgres.em.flush();
+
+  // Finalize a stale attack log from a previous attacker who disconnected
+  if (staleAttackId) {
+    const staleLog = await postgres.em.findOne(AttackLogs, {
+      defender_userid: save.saveuserid,
+      attackid: staleAttackId,
+    });
+    if (staleLog && save.attackreport) {
+      staleLog.attackreport = save.attackreport as Record<string, unknown>;
+      postgres.em.persist(staleLog);
+      await postgres.em.flush();
+    }
+  }
 
   // Create an attack log and update neighbour attack counters
   if (save.type !== BaseType.TRIBE) {

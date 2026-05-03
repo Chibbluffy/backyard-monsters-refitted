@@ -15,6 +15,8 @@ import { BaseSaveSchema } from "../../schemas/BaseSaveSchema.js";
 import { academyHandler } from "../base/save/handlers/academyHandler.js";
 import { attackLootHandler } from "../base/save/handlers/attackLootHandler.js";
 import { buildingDataHandler } from "../base/save/handlers/buildingDataHandler.js";
+import { updateResources, Operation } from "../../services/base/updateResources.js";
+import { AttackLogs } from "../../models/attacklogs.model.js";
 import { purchaseHandler } from "../base/save/handlers/purchaseHandler.js";
 import { resourcesHandler } from "../base/save/handlers/resourceHandler.js";
 import { damageProtection } from "../../services/maproom/v2/damageProtection.js";
@@ -122,6 +124,12 @@ export const infernoSave: KoaController = async (ctx) => {
 
             case SaveKeys.ATTACKLOOT:
               attackLootHandler(value, userSave, SaveKeys.IRESOURCES);
+              if (baseSave.resources) {
+                updateResources(value, baseSave.resources, Operation.SUBTRACT);
+                for (const key of ["r1", "r2", "r3", "r4"] as const) {
+                  if ((baseSave.resources[key] as number) < 0) baseSave.resources[key] = 0;
+                }
+              }
               break;
               
             default:
@@ -133,6 +141,18 @@ export const infernoSave: KoaController = async (ctx) => {
     }
 
     if (isAttack) postgres.em.persist(userSave);
+
+    if (isAttack && saveData.over) {
+      const attackLog = await postgres.em.findOne(AttackLogs, {
+        attacker_userid: user.userid,
+        attackid: baseSave.attackid,
+      });
+      if (attackLog) {
+        if (saveData.attackloot) attackLog.loot = saveData.attackloot;
+        if (baseSave.attackreport) attackLog.attackreport = baseSave.attackreport;
+        postgres.em.persist(attackLog);
+      }
+    }
 
     if (isAttack) baseSave.attackid = saveData.over ? 0 : baseSave.attackid;
 

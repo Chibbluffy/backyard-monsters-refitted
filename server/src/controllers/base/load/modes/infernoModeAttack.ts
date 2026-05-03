@@ -4,6 +4,7 @@ import { Save } from "../../../../models/save.model.js";
 import { User } from "../../../../models/user.model.js";
 import { postgres } from "../../../../server.js";
 import { createAttackLog } from "../../../../services/base/createAttackLog.js";
+import { AttackLogs } from "../../../../models/attacklogs.model.js";
 import { getCurrentDateTime } from "../../../../utils/getCurrentDateTime.js";
 import type { AttackDetails } from "./baseModeAttack.js";
 import { registerInfernoAttacker } from "../../../../services/maproom/inferno/registerInfernoAttacker.js";
@@ -49,8 +50,10 @@ export const infernoModeAttack = async (user: User, baseid: string) => {
 
   if (isAttackActive(save)) throw baseUnderAttackErr();
 
-  if (save.attacks.length > 3) { 
-    save.attacks = save.attacks.slice(-2); 
+  const staleAttackId = save.attackid !== 0 ? save.attackid : null;
+
+  if (save.attacks.length > 3) {
+    save.attacks = save.attacks.slice(-2);
   }
 
   const attackDetails: AttackDetails = {
@@ -80,6 +83,19 @@ export const infernoModeAttack = async (user: User, baseid: string) => {
 
   postgres.em.persist(save);
   await postgres.em.flush();
+
+  if (staleAttackId) {
+    const staleLog = await postgres.em.findOne(AttackLogs, {
+      defender_userid: save.saveuserid,
+      attackid: staleAttackId,
+    });
+    if (staleLog && save.attackreport) {
+      staleLog.attackreport = save.attackreport;
+      postgres.em.persist(staleLog);
+      await postgres.em.flush();
+    }
+  }
+
   return save;
 };
 

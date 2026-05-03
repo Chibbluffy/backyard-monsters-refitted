@@ -323,7 +323,7 @@ export class Save {
   loot?: JsonObject | null = {};
 
   @FrontendKey
-  @Property({ type: "text", nullable: true })
+  @Property({ columnType: "jsonb", nullable: true })
   attackreport?: JsonObject | null = {};
 
   @FrontendKey

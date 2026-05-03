@@ -17,7 +17,8 @@ import { permissionErr, saveFailureErr } from "../../../errors/errors.js";
 import { attackLootHandler } from "./handlers/attackLootHandler.js";
 import { monsterUpdateHandler } from "./handlers/monsterUpdateHandler.js";
 import { validateSave } from "../../../scripts/anticheat/anticheat.js";
-import { updateResources } from "../../../services/base/updateResources.js";
+import { updateResources, Operation } from "../../../services/base/updateResources.js";
+import { AttackLogs } from "../../../models/attacklogs.model.js";
 import { buildingDataHandler } from "./handlers/buildingDataHandler.js";
 import { takeoverCellMR3, type TakeoverData } from "../../../services/maproom/v3/takeoverCellMR3.js";
 import { damageProtection } from "../../../services/maproom/v2/damageProtection.js";
@@ -152,6 +153,24 @@ export const baseSave: KoaController = async (ctx) => {
 
     if (saveData.attackloot) {
       attackLootHandler(saveData.attackloot, userSave);
+      if (baseSave.resources) {
+        updateResources(saveData.attackloot, baseSave.resources, Operation.SUBTRACT);
+        for (const key of ["r1", "r2", "r3", "r4"] as const) {
+          if ((baseSave.resources[key] as number) < 0) baseSave.resources[key] = 0;
+        }
+      }
+    }
+
+    if (saveData.over) {
+      const attackLog = await postgres.em.findOne(AttackLogs, {
+        attacker_userid: user.userid,
+        attackid: baseSave.attackid,
+      });
+      if (attackLog) {
+        if (saveData.attackloot) attackLog.loot = saveData.attackloot;
+        if (baseSave.attackreport) attackLog.attackreport = baseSave.attackreport;
+        postgres.em.persist(attackLog);
+      }
     }
 
     postgres.em.persist(userSave);
