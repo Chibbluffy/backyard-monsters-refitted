@@ -35,8 +35,10 @@ export const updateResources = (
       if (key.endsWith("max")) {
         saveResources[resourceKey] = resources[resourceKey];
       } else {
-        saveResources[resourceKey] +=
-          operation === Operation.ADD ? resources[resourceKey] : -resources[resourceKey]!;
+        const current = Number(saveResources[resourceKey]) || 0;
+        const delta = resources[resourceKey] ?? 0;
+        saveResources[resourceKey] =
+          operation === Operation.ADD ? current + delta : current - delta;
       }
     });
   }
