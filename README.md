@@ -66,3 +66,16 @@ Backyard Monsters preservation project.
 Copyright (C) 2025 | The Backyard Monsters Refitted team
 See the GNU General Public License <https://www.gnu.org/licenses/>.
 ```
+
+
+## Ideas for local server
+- 10x more shiny per mushroom
+- Double ADT count
+- Multiple champs simultaneously
+- rebalance defenses
+- rebalance wild tribes
+- catapult rework (percentage?)
+- monster rework
+- seasons? reset base? reset outposts. extra starter shiny
+- MR3 main yard defenders update
+- 
